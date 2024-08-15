@@ -140,14 +140,6 @@ def delete_all_break_data(employee):
     with open(DATA_FILE, "w") as file:
         json.dump(data, file)
 
-def delete_selected_employee_data():
-    employee = selected_employee.get()
-    if employee:
-        confirm_delete_break_data(employee)
-        update_employee_list()
-    else:
-        messagebox.showerror("Error", "Please select an employee.")
-
 def start_break():
     global break_start_time
     break_start_time = datetime.now().strftime("%H:%M:%S")
@@ -182,9 +174,13 @@ def show_summary():
     employee = selected_employee.get()
     if employee:
         break_data = load_break_data(employee)
+        total_breaks = len(break_data)  # Toplam mola sayısını hesapla
         summary_text = f"Break Summary for {employee}:\n"
         total_duration_minutes = 0
         total_duration_seconds = 0
+        work_hours = 8
+        total_minutes_worked = work_hours * 60
+        
         for record in break_data:
             start = record['start_time']
             end = record['end_time']
@@ -197,81 +193,75 @@ def show_summary():
         total_duration_minutes += total_duration_seconds // 60
         total_duration_seconds %= 60
 
+        performance_percentage = ((total_minutes_worked - total_duration_minutes) / total_minutes_worked) * 100
+
         summary_text += f"\nTotal Break Time: {total_duration_minutes}:{total_duration_seconds:02} minutes"
+        summary_text += f"\nTotal Breaks: {total_breaks}"  # Toplam mola sayısını özetin sonuna ekle
+        summary_text += f"\nDay Performance: {performance_percentage:.2f}%"
         messagebox.showinfo("Summary", summary_text)
     else:
         messagebox.showerror("Error", "Please select an employee.")
 
-def generate_end_of_day_report():
+def delete_selected_employee_data():
     employee = selected_employee.get()
     if employee:
-        break_data = load_break_data(employee)
-        if break_data:
-            total_duration_minutes = 0
-            total_duration_seconds = 0
-
-            # Calculate total break time
-            for record in break_data:
-                duration_minutes = record['duration_minutes']
-                duration_seconds = record['duration_seconds']
-                total_duration_minutes += duration_minutes
-                total_duration_seconds += duration_seconds
-
-            # Calculate total time in minutes
-            total_duration_minutes += total_duration_seconds // 60
-            total_duration_seconds %= 60
-
-            # Performance calculation
-            work_hours = 8
-            total_minutes_worked = work_hours * 60
-            total_break_minutes = total_duration_minutes
-
-            performance_percentage = ((total_minutes_worked - total_break_minutes) / total_minutes_worked) * 100
-
-            # Display report
-            summary_text = (f"End of Day Report for {employee}:\n"
-                            f"Total Break: {total_duration_minutes} min {total_duration_seconds} sec\n"
-                            f"Day Performance: {performance_percentage:.2f}%")
-
-            messagebox.showinfo("End of Day Report", summary_text)
-        else:
-            messagebox.showerror("Error", "No break data found for the selected employee.")
+        confirm_delete_break_data(employee)
+        update_employee_list()
     else:
         messagebox.showerror("Error", "Please select an employee.")
 
-# GUI
+# GUI setup
 root = tk.Tk()
 root.title("Break Tracker")
 
 frame_employee = ttk.Frame(root, padding="10")
-frame_employee.grid(row=0, column=0, sticky=(tk.W, tk.E))
+frame_employee.grid(row=0, column=0, padx=10, pady=10, sticky=(tk.W, tk.E))
 
 frame_break = ttk.Frame(root, padding="10")
-frame_break.grid(row=1, column=0, sticky=(tk.W, tk.E))
+frame_break.grid(row=1, column=0, padx=10, pady=10, sticky=(tk.W, tk.E))
 
-ttk.Label(frame_employee, text="Employee Name:").grid(row=0, column=0, sticky=tk.W)
+# Employee Management
+lbl_employee_name = ttk.Label(frame_employee, text="Employee Name:")
+lbl_employee_name.grid(row=0, column=0, sticky=tk.W)
+
 entry_employee_name = ttk.Entry(frame_employee)
-entry_employee_name.grid(row=0, column=1, padx=5)
+entry_employee_name.grid(row=0, column=1, sticky=(tk.W, tk.E))
 
-ttk.Button(frame_employee, text="Add Employee", command=add_employee).grid(row=0, column=2, padx=5)
-ttk.Button(frame_employee, text="Delete Employee", command=delete_employee).grid(row=0, column=3, padx=5)
-ttk.Button(frame_employee, text="Delete Break Data", command=delete_selected_employee_data).grid(row=0, column=4, padx=5)
+btn_add_employee = ttk.Button(frame_employee, text="Add Employee", command=add_employee)
+btn_add_employee.grid(row=0, column=2, sticky=tk.W)
 
-employees = load_employees()
+lbl_employee_list = ttk.Label(frame_employee, text="Select Employee:")
+lbl_employee_list.grid(row=1, column=0, sticky=tk.W)
+
 selected_employee = tk.StringVar()
-employee_list_menu = ttk.OptionMenu(frame_employee, selected_employee, employees[0] if employees else "", *employees)
-employee_list_menu.grid(row=0, column=5, padx=5)
+employee_list_menu = ttk.OptionMenu(frame_employee, selected_employee, "")
+employee_list_menu.grid(row=1, column=1, sticky=(tk.W, tk.E))
 
+btn_delete_employee = ttk.Button(frame_employee, text="Delete Employee", command=delete_employee)
+btn_delete_employee.grid(row=1, column=2, sticky=tk.W)
+
+# Break Timing
 lbl_break_start = ttk.Label(frame_break, text="Break Start: Not started")
 lbl_break_start.grid(row=0, column=0, sticky=tk.W)
 
 lbl_break_duration = ttk.Label(frame_break, text="Break Duration: 00:00:00")
 lbl_break_duration.grid(row=1, column=0, sticky=tk.W)
 
-ttk.Button(frame_break, text="Start Break", command=start_break).grid(row=0, column=1, padx=5)
-ttk.Button(frame_break, text="End Break", command=end_break).grid(row=1, column=1, padx=5)
+btn_start_break = ttk.Button(frame_break, text="Start Break", command=start_break)
+btn_start_break.grid(row=2, column=0, sticky=tk.W)
 
-ttk.Button(frame_break, text="Show Summary", command=show_summary).grid(row=2, column=0, padx=5, pady=5)
-ttk.Button(frame_break, text="Generate End of Day Report", command=generate_end_of_day_report).grid(row=2, column=1, padx=5, pady=5)
+btn_end_break = ttk.Button(frame_break, text="End Break", command=end_break)
+btn_end_break.grid(row=2, column=1, sticky=tk.W)
+
+# Show Summary Button
+btn_summary = ttk.Button(frame_break, text="Show Summary", command=show_summary)
+btn_summary.grid(row=3, column=0, sticky=tk.W)
+
+# Delete All Breaks Button
+btn_delete_breaks = ttk.Button(frame_break, text="Delete All Breaks", command=delete_selected_employee_data)
+btn_delete_breaks.grid(row=3, column=1, sticky=tk.E)
+
+# Initialize
+update_employee_list()
 
 root.mainloop()
