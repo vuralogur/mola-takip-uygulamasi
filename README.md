@@ -103,4 +103,4 @@ matplotlib yoktur. CSV, `csv` standart kütüphanesiyle üretilir.
 
 ## Lisans
 
-Belirtilmedi.
+MIT — ayrıntı için [LICENSE](LICENSE).
