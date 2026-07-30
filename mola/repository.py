@@ -87,6 +87,16 @@ class _Depo:
             self._uyarilar.ekle(Metin.BASLIK_UYARI, mesaj, kritik=True)
             return varsayilan
 
+    def _destruktif_yedek(self, dosya: Path) -> None:
+        """Geri alınamaz bir değişiklikten önce sessiz yedek alır.
+
+        Yedekleme kritik yol değil: başarısız olursa `backup.yedek_al` None
+        döner ve işlem yine sürer. Bilerek uyarı üretilmez — her silme
+        işleminde pencere açmak akışı boğardı, göç yolundaki bilgilendirme
+        ise tek seferliktir.
+        """
+        backup.yedek_al(dosya)
+
     def _guvenli_yaz(self, dosya: Path, veri: Any) -> bool:
         """Yazar; başarısızsa uyarı bırakıp False döner."""
         try:
@@ -147,6 +157,7 @@ class CalisanDeposu(_Depo):
         if ad not in onceki:
             return False
         yeni = [mevcut for mevcut in onceki if mevcut != ad]
+        self._destruktif_yedek(CALISAN_DOSYASI)
         if not self._guvenli_yaz(CALISAN_DOSYASI, yeni):
             return False
         self._liste = yeni
@@ -229,6 +240,7 @@ class MolaDeposu(_Depo):
         silinen = len(mevcut) - len(kalan)
         if silinen == 0:
             return 0
+        self._destruktif_yedek(MOLA_DOSYASI)
         if not self._degisikligi_uygula(calisan, kalan):
             return 0
         return silinen
@@ -238,15 +250,46 @@ class MolaDeposu(_Depo):
         silinen = len(self._veri.get(calisan, []))
         if silinen == 0:
             return 0
+        self._destruktif_yedek(MOLA_DOSYASI)
         if not self._degisikligi_uygula(calisan, []):
             return 0
         return silinen
+
+    def not_guncelle(self, calisan: str, kimlik: str, aciklama: str) -> bool:
+        """Tek kaydın notunu değiştirir. Kayıt yoksa veya yazma başarısızsa
+        False döner ve önceki not geri konur.
+
+        Yedek alınmaz: not eklemek veri silmez, yalnızca boş bir alanı
+        doldurur veya değiştirir.
+        """
+        self._yukle_gerekirse()
+        hedef = next(
+            (
+                kayit
+                for kayit in self._veri.get(calisan, [])
+                if kayit.kimlik == kimlik
+            ),
+            None,
+        )
+        if hedef is None:
+            return False
+
+        if hedef.aciklama == aciklama:
+            return True
+
+        onceki = hedef.aciklama
+        hedef.aciklama = aciklama
+        if self._kaydet():
+            return True
+        hedef.aciklama = onceki
+        return False
 
     def calisani_kaldir(self, calisan: str) -> bool:
         """Çalışan silinirken mola kayıtlarını da kaldırır."""
         self._yukle_gerekirse()
         if calisan not in self._veri:
             return True
+        self._destruktif_yedek(MOLA_DOSYASI)
         onceki = self._veri
         self._veri = {ad: kayitlar for ad, kayitlar in onceki.items() if ad != calisan}
         if self._kaydet():

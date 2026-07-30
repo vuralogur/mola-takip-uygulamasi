@@ -15,7 +15,7 @@ from datetime import datetime
 from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
 
-from config import UYGULAMA_ADI, VARSAYILAN_AYARLAR
+from config import MOLA_NOTU_MAX_UZUNLUK, UYGULAMA_ADI, VARSAYILAN_AYARLAR
 from i18n import Metin
 from models import Ayarlar, MolaTipi, saat_metni
 from repository import (
@@ -29,7 +29,12 @@ from services.break_service import LimitDurumu, MolaServisi
 from services.employee_service import CalisanServisi
 from services.report_service import RaporServisi, csv_disa_aktar, tip_dagilimi
 from ui import theme
-from ui.dialogs import AyarlarPenceresi, GrafikPenceresi, TumCalisanlarPenceresi
+from ui.dialogs import (
+    AyarlarPenceresi,
+    GrafikPenceresi,
+    NotPenceresi,
+    TumCalisanlarPenceresi,
+)
 from ui.panels import CalisanPaneli, GecmisPaneli, MolaPaneli
 
 SAYAC_ARALIGI_MS = 1000
@@ -131,6 +136,7 @@ class MolaTakipUygulamasi(tk.Tk):
             disa_aktar_geri=self._csv_disa_aktar,
             grafik_geri=self._grafigi_ac,
             tum_calisanlar_geri=self._tum_calisanlari_ac,
+            not_geri=self._mola_notunu_duzenle,
         )
         self._gecmis_paneli.grid(row=2, column=0, sticky=tk.NSEW)
 
@@ -358,6 +364,59 @@ class MolaTakipUygulamasi(tk.Tk):
         self._gecmisi_yenile()
         self._paneli_guncelle()
         self._bekleyen_uyarilari_goster()
+
+    # --- Mola notu ---
+
+    def _mola_notunu_duzenle(self, kimlik: str | None = None) -> None:
+        """Not penceresini açar.
+
+        `kimlik` tabloda çift tıklanan satırdan gelir. Düğmeden çağrıldığında
+        None'dır; o durumda seçim kullanılır ve tek kayıt şartı aranır, çünkü
+        bir not birden çok kayda birlikte yazılmaz.
+        """
+        calisan = self._secili_calisan()
+        if calisan is None:
+            messagebox.showwarning(
+                Metin.BASLIK_UYARI, Metin.CALISAN_SECILMEDI, parent=self
+            )
+            return
+
+        if kimlik is None:
+            secili = self._gecmis_paneli.secili_kimlikler()
+            if len(secili) != 1:
+                messagebox.showinfo(
+                    Metin.BASLIK_BILGI, Metin.NOT_TEK_KAYIT, parent=self
+                )
+                return
+            kimlik = next(iter(secili))
+
+        mevcut = self._mola_servisi.not_oku(calisan, kimlik)
+        if mevcut is None:
+            messagebox.showwarning(
+                Metin.BASLIK_UYARI, Metin.NOT_KAYIT_BULUNAMADI, parent=self
+            )
+            return
+
+        secili_kimlik = kimlik
+        NotPenceresi(
+            self,
+            mevcut,
+            MOLA_NOTU_MAX_UZUNLUK,
+            lambda yeni_not: self._notu_kaydet(calisan, secili_kimlik, yeni_not),
+        )
+
+    def _notu_kaydet(self, calisan: str, kimlik: str, aciklama: str) -> bool:
+        """Notu servise verir. Başarısızsa pencere açık kalsın diye False döner."""
+        basarili, mesaj = self._mola_servisi.not_kaydet(calisan, kimlik, aciklama)
+        if not basarili:
+            messagebox.showerror(Metin.BASLIK_HATA, mesaj, parent=self)
+            self._bekleyen_uyarilari_goster()
+            return False
+
+        self._durumu_yaz(mesaj)
+        self._gecmisi_yenile()
+        self._bekleyen_uyarilari_goster()
+        return True
 
     # --- Raporlama ---
 

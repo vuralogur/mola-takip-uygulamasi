@@ -75,6 +75,17 @@ class Metin:
     MOLA_SILINDI: Final = "{sayi} mola kaydı silindi."
     MOLA_SECILMEDI: Final = "Silinecek mola kaydı seçilmedi."
 
+    # --- Mola notu ---
+    # Sütun başlığı ve "Not" düğmesi aynı metni kullanır: SUTUN_NOT.
+    NOT_BASLIK: Final = "Mola Notu"
+    NOT_ETIKET: Final = "Not (isteğe bağlı, en fazla {max} karakter)"
+    NOT_TEK_KAYIT: Final = "Not için tek bir mola kaydı seçin."
+    NOT_KAYIT_BULUNAMADI: Final = "Mola kaydı bulunamadı."
+    NOT_UZUN: Final = "Not en fazla {max} karakter olabilir."
+    NOT_KAYDEDILDI: Final = "Not kaydedildi."
+    NOT_TEMIZLENDI: Final = "Not silindi."
+    NOT_KAYDEDILEMEDI: Final = "Not kaydedilemedi."
+
     # --- Sayaç ve durum ---
     SAYAC_BOS: Final = "--:--:--"
     DURUM_HAZIR: Final = "Hazır"
@@ -90,6 +101,7 @@ class Metin:
     SUTUN_BITIS: Final = "Bitiş"
     SUTUN_SURE: Final = "Süre"
     SUTUN_TIP: Final = "Tip"
+    SUTUN_NOT: Final = "Not"
     SUTUN_CALISAN: Final = "Çalışan"
     SUTUN_DURUM: Final = "Durum"
     SUTUN_MOLA_SAYISI: Final = "Mola"

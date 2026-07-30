@@ -13,11 +13,14 @@ uygulaması. Python + Tkinter, veriler yerel JSON dosyalarında.
 - **Günlük mola hakkı** — kişi başı günlük bütçe ve kalan süre gösterimi
 - **Sıralanabilir geçmiş tablosu** — takvim tabanlı dönem filtresi
   (Bugün / Bu Hafta / Bu Ay / Tümü)
+- **Mola notu** — kayda çift tıklayarak (veya Not düğmesiyle) açıklama
+  ekle; tabloda sütun olarak görünür, CSV'ye de gider
 - **Raporlar** — kişi özeti, tüm çalışanların karşılaştırmalı tablosu,
   çubuk grafikler
 - **CSV dışa aktarma** — Excel'de Türkçe karakterler bozulmadan açılır
 - **Açık / koyu tema** — Windows 11 görünümü (sv-ttk)
-- **Veri güvenliği** — atomik yazma, otomatik yedekleme, bozuk dosya kurtarma
+- **Veri güvenliği** — atomik yazma, her silme işlemi öncesi otomatik yedek,
+  bozuk dosya kurtarma
 
 ## Kurulum
 

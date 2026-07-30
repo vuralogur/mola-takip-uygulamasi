@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import date, datetime
 from enum import Enum
 
+from config import MOLA_NOTU_MAX_UZUNLUK
 from i18n import Metin
 from models import AktifMola, MolaKaydi, MolaTipi, saat_metni
 from repository import AktifMolaDeposu, AyarDeposu, MolaDeposu
@@ -101,6 +102,37 @@ class MolaServisi:
     def iptal(self, calisan: str) -> bool:
         """Molayı kayıt oluşturmadan siler. Çökme kurtarmada kullanılır."""
         return self._aktif.bitir(calisan) is not None
+
+    # --- Mola notu ---
+
+    def not_oku(self, calisan: str, kimlik: str) -> str | None:
+        """Kaydın mevcut notu. Kayıt bulunamazsa None."""
+        for kayit in self._molalar.molalar(calisan):
+            if kayit.kimlik == kimlik:
+                return kayit.aciklama
+        return None
+
+    def not_kaydet(
+        self, calisan: str, kimlik: str, aciklama: str
+    ) -> tuple[bool, str]:
+        """Tamamlanmış bir molanın notunu günceller.
+
+        Not tek satıra indirilir: tablo hücresi ve CSV satırı satır sonuyla
+        bölünürse okunamaz hale gelir. Boş not alanı temizler.
+        """
+        temiz = " ".join(aciklama.split())
+
+        if len(temiz) > MOLA_NOTU_MAX_UZUNLUK:
+            return False, Metin.NOT_UZUN.format(max=MOLA_NOTU_MAX_UZUNLUK)
+
+        if self.not_oku(calisan, kimlik) is None:
+            return False, Metin.NOT_KAYIT_BULUNAMADI
+
+        if not self._molalar.not_guncelle(calisan, kimlik, temiz):
+            # Yazma hatası; ayrıntı UyariKutusu'nda.
+            return False, Metin.NOT_KAYDEDILEMEDI
+
+        return True, Metin.NOT_KAYDEDILDI if temiz else Metin.NOT_TEMIZLENDI
 
     # --- Limit değerlendirmesi ---
 

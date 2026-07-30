@@ -294,7 +294,7 @@ class GecmisPaneli(ttk.Frame):
     sıralanabilir ve çoklu seçim yapılabilir.
     """
 
-    SUTUNLAR = ("baslangic", "bitis", "sure", "tip")
+    SUTUNLAR = ("baslangic", "bitis", "sure", "tip", "not")
 
     def __init__(
         self,
@@ -306,8 +306,10 @@ class GecmisPaneli(ttk.Frame):
         disa_aktar_geri: Callable[[], None],
         grafik_geri: Callable[[], None],
         tum_calisanlar_geri: Callable[[], None],
+        not_geri: Callable[[str | None], None],
     ) -> None:
         super().__init__(master, padding=(theme.L, theme.M))
+        self._not_geri = not_geri
 
         self.columnconfigure(0, weight=1)
         self.rowconfigure(1, weight=1)
@@ -339,6 +341,7 @@ class GecmisPaneli(ttk.Frame):
             "bitis": (Metin.SUTUN_BITIS, 150),
             "sure": (Metin.SUTUN_SURE, 90),
             "tip": (Metin.SUTUN_TIP, 90),
+            "not": (Metin.SUTUN_NOT, 220),
         }
         for sutun in self.SUTUNLAR:
             baslik, genislik = basliklar[sutun]
@@ -347,6 +350,8 @@ class GecmisPaneli(ttk.Frame):
             )
             self._tablo.column(sutun, width=genislik, anchor=tk.W)
         self._tablo.grid(row=1, column=0, sticky=tk.NSEW)
+        # Çift tıklama, tıklanan satırın notunu düzenlemeye açar.
+        self._tablo.bind("<Double-1>", self._cift_tik)
 
         kaydirma = ttk.Scrollbar(self, orient=tk.VERTICAL, command=self._tablo.yview)
         self._tablo.configure(yscrollcommand=kaydirma.set)
@@ -364,6 +369,7 @@ class GecmisPaneli(ttk.Frame):
                 (Metin.RAPOR_DISA_AKTAR, disa_aktar_geri),
                 (Metin.RAPOR_GRAFIK, grafik_geri),
                 (Metin.RAPOR_TUM_CALISANLAR, tum_calisanlar_geri),
+                (Metin.SUTUN_NOT, lambda: not_geri(None)),
                 (Metin.SIL, sil_geri),
                 (f"{Metin.SIL} ({Metin.DONEM_TUMU})", hepsini_sil_geri),
             )
@@ -386,6 +392,16 @@ class GecmisPaneli(ttk.Frame):
 
     def secili_kimlikler(self) -> set[str]:
         return set(self._tablo.selection())
+
+    def _cift_tik(self, olay: tk.Event) -> None:
+        """Çift tıklanan satırın kimliğini bildirir; başlık satırında sessiz.
+
+        `identify_row` boş string döndüğünde tıklama bir kayda değil boş
+        alana veya başlığa gelmiştir.
+        """
+        kimlik = self._tablo.identify_row(olay.y)
+        if kimlik:
+            self._not_geri(kimlik)
 
     def yenile(self, kayitlar: list[MolaKaydi], ozet: Ozet) -> None:
         self._kayitlar = list(kayitlar)
@@ -417,6 +433,7 @@ class GecmisPaneli(ttk.Frame):
                     kayit.bitis.strftime("%d.%m.%Y %H:%M:%S"),
                     saat_metni(kayit.toplam_saniye),
                     kayit.tip.etiket,
+                    kayit.aciklama,
                 ),
             )
 
@@ -429,6 +446,9 @@ class GecmisPaneli(ttk.Frame):
             "bitis": lambda kayit: kayit.bitis,
             "sure": lambda kayit: kayit.toplam_saniye,
             "tip": lambda kayit: kayit.tip.etiket,
+            # Boş notlar sıralamada bir arada kalsın; büyük/küçük harf ayırt
+            # edilmez, aksi halde "Ada" ile "ada" ayrı gruplara düşüyordu.
+            "not": lambda kayit: kayit.aciklama.casefold(),
         }
         return sorted(
             self._kayitlar,

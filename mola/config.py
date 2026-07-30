@@ -57,6 +57,10 @@ SAKLANACAK_YEDEK_SAYISI: Final[int] = 10
 CALISAN_ADI_MIN_UZUNLUK: Final[int] = 2
 CALISAN_ADI_MAX_UZUNLUK: Final[int] = 60
 
+# Mola notu uzunluk sınırı. Alan (`note`) şemada v1'den beri var; sınır
+# yalnızca girişi makul tutmak için, şemayı etkilemez.
+MOLA_NOTU_MAX_UZUNLUK: Final[int] = 200
+
 VARSAYILAN_AYARLAR: Final[dict[str, Any]] = {
     "tema": "light",
     "vardiya_saati": 8,

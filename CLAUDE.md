@@ -150,6 +150,14 @@ Date format is `"%Y-%m-%d %H:%M:%S"` everywhere. Never introduce a second one.
   data.
 - **Corrupt file: move aside, never overwrite.** `_bozuk_dosyayi_kenara_al`
   renames it with a timestamp so the user can recover records by hand.
+- **Back up before every destructive write.** `_Depo._destruktif_yedek` runs
+  ahead of `MolaDeposu.sil` / `hepsini_sil` / `calisani_kaldir` and
+  `CalisanDeposu.sil`. It stays silent on success and on failure — a dialog per
+  delete would drown the flow, and `backup.yedek_al` never blocks the write.
+  Adding a note is not destructive and takes no backup.
+- **Backup names are second-resolution.** Two deletes inside one second used to
+  overwrite the same file; `backup._bos_hedef` appends `_2`, `_3` … and uses
+  `_` (sorts after `.`) so name order stays chronological.
 - **ttk style `foreground` does not reach the screen under sv-ttk.** The
   Windows theme engine draws label text in its own palette. `theme.py`
   intentionally defines font-only styles; set colors with a widget-level
@@ -215,7 +223,11 @@ No test suite in the repo. Verification is manual — after any change:
 - close and reopen while on break — counter resumes, does not reset
 - limit warning colors at 80% and 100% of the type limit
 - period filters, including the empty-data case
-- delete selected breaks, delete all breaks
+- delete selected breaks, delete all breaks — a fresh file lands in `yedekler/`
+  each time, two deletes in the same second produce two files
+- add / edit / clear a break note: double-click a row and use the Not button;
+  the note survives reload, shows in the table and in the CSV
+- Not button with no selection and with two rows selected — both refuse
 - launch with missing JSON; launch with corrupt JSON
 - Turkish characters survive save/load and CSV export
 - both light and dark theme, window resized — no widget overflow

@@ -199,6 +199,7 @@ def csv_disa_aktar(
         "Süre (dk)",
         "Süre (sn)",
         "Toplam saniye",
+        Metin.SUTUN_NOT,
     ]
 
     try:
@@ -215,6 +216,7 @@ def csv_disa_aktar(
                         kayit.sure_dakika,
                         kayit.sure_saniye,
                         kayit.toplam_saniye,
+                        kayit.aciklama,
                     ]
                 )
     except OSError as hata:

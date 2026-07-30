@@ -164,6 +164,52 @@ class AyarlarPenceresi(_Pencere):
             self.destroy()
 
 
+class NotPenceresi(_Pencere):
+    """Tek bir mola kaydının notunu düzenler.
+
+    Kaydet'e basılana kadar hiçbir şey değişmez; İptal veya Esc kaydı olduğu
+    gibi bırakır. Not tek satırlık bir `Entry`: tablo hücresi ve CSV satırı
+    çok satırlı metni okunaksız gösterir.
+    """
+
+    def __init__(
+        self,
+        master: tk.Misc,
+        mevcut_not: str,
+        max_uzunluk: int,
+        kaydet_geri: Callable[[str], bool],
+    ) -> None:
+        super().__init__(master, Metin.NOT_BASLIK, "480x170")
+        self._kaydet_geri = kaydet_geri
+
+        govde = ttk.Frame(self, padding=theme.L)
+        govde.pack(fill=tk.BOTH, expand=True)
+        govde.columnconfigure(0, weight=1)
+
+        ttk.Label(govde, text=Metin.NOT_ETIKET.format(max=max_uzunluk)).grid(
+            row=0, column=0, sticky=tk.W, pady=(0, theme.XS)
+        )
+
+        self._deger = tk.StringVar(value=mevcut_not)
+        giris = ttk.Entry(govde, textvariable=self._deger)
+        giris.grid(row=1, column=0, sticky=tk.EW)
+        giris.focus_set()
+        giris.icursor(tk.END)
+        giris.bind("<Return>", lambda _olay: self._kaydet())
+
+        butonlar = ttk.Frame(govde)
+        butonlar.grid(row=2, column=0, sticky=tk.E, pady=(theme.L, 0))
+        ttk.Button(butonlar, text=Metin.IPTAL, command=self.destroy).pack(
+            side=tk.LEFT, padx=(0, theme.S)
+        )
+        ttk.Button(butonlar, text=Metin.KAYDET, command=self._kaydet).pack(side=tk.LEFT)
+
+    def _kaydet(self) -> None:
+        """Kaydetme başarısızsa pencere açık kalır, kullanıcı düzeltebilir."""
+        if self._kaydet_geri(self._deger.get()):
+            self.destroy()
+
+
 class TumCalisanlarPenceresi(_Pencere):
     """Bütün çalışanların seçili dönemdeki karşılaştırmalı tablosu."""
 
