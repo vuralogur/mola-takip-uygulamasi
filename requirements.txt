@@ -1,0 +1,5 @@
+# Calisma zamani bagimliligi
+sv-ttk>=2.6.0
+
+# Paketleme icin (opsiyonel, sadece .exe uretirken gerekir):
+# pyinstaller>=6.0
